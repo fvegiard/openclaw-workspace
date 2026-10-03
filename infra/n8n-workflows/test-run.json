@@ -1,0 +1,76 @@
+{
+  "name": "test-run",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Run tests in the repository\nconst workdir = $json.workdir || '/workspace';\nconst testCmd = $json.testCmd || 'npm test';\n\nreturn [{ json: {\n  action: 'agent_launch',\n  prompt: `Run tests: ${testCmd} in ${workdir}. Report all failures.`, \n  name: 'test-run-' + Date.now(),\n  workdir: workdir,\n  config: { permission_mode: 'plan', plan_approval: 'delegate', worktree_strategy: 'delegate' }\n}}];"
+      },
+      "id": "launch-test",
+      "name": "Launch Test Agent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check test results\nconst sessionId = $json.sessionId;\nreturn [{ json: { sessionId, action: 'get_output' } }];"
+      },
+      "id": "get-results",
+      "name": "Get Test Results",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{$json.output}}", "operation": "contains", "value2": "pass" }
+          ]
+        }
+      },
+      "id": "pass-if",
+      "name": "Tests Pass?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { status: 'success', message: 'All tests passed' } }];"
+      },
+      "id": "success",
+      "name": "Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Launch fix agent for failing tests\nconst sessionId = $json.sessionId;\nreturn [{ json: {\n  action: 'agent_launch',\n  prompt: 'Fix failing tests based on output: ' + $json.output,\n  name: 'test-fix-' + Date.now(),\n  workdir: $json.workdir,\n  config: { permission_mode: 'plan', plan_approval: 'delegate', worktree_strategy: 'delegate' }\n}}];"
+      },
+      "id": "launch-fix",
+      "name": "Launch Fix Agent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1250, 400]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [[{ "node": "Launch Test Agent" }]] },
+    "Launch Test Agent": { "main": [[{ "node": "Get Test Results" }]] },
+    "Get Test Results": { "main": [[{ "node": "Tests Pass?" }]] },
+    "Tests Pass?": { "main": [[{ "node": "Success" }], [{ "node": "Launch Fix Agent" }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "testing" }, { "name": "agent" }]
+}

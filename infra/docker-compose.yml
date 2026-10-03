@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # n8n workflow engine
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_HOST:-localhost}:5678/
+      - GENERIC_TIMEZONE=America/Toronto
+      - N8N_SECURE_COOKIE=false
+      - N8N_EDITOR_BASE_URL=https://${N8N_HOST:-localhost}:5678/
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n-workflows:/workflows:ro
+    networks:
+      - agent-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL for n8n + agent team state
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-agent_team}
+      - POSTGRES_USER=${POSTGRES_USER:-agent}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - agent-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for coordination/message bus
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - agent-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MCP Gateway - exposes n8n-ops-mcp as MCP server
+  mcp-gateway:
+    build:
+      context: ./n8n-ops-mcp
+      dockerfile: Dockerfile.mcp
+    container_name: mcp-gateway
+    restart: unless-stopped
+    environment:
+      - N8N_BASE_URL=http://n8n:5678
+      - N8N_API_KEY=${N8N_API_KEY}
+      - N8N_ENABLE_EDIT=true
+      - N8N_ENABLE_CREDENTIALS_WRITE=true
+      - N8N_BACKUP_DIR=/backups
+      - N8N_MAX_EXECUTION_LOG_BYTES=65536
+      - N8N_REQUEST_TIMEOUT_MS=15000
+    volumes:
+      - mcp_backups:/backups
+      - ./n8n-ops-mcp:/app:ro
+    networks:
+      - agent-network
+    depends_on:
+      n8n:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('ok')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Tailscale sidecar for secure mesh networking
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}
+      - TS_HOSTNAME=gateway-mxlinux
+      - TS_ACCEPT_DNS=false
+      - TS_ROUTES=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+    networks:
+      - agent-network
+    # Run in userspace mode for containers
+    command: tailscaled --tun=userspace-networking --socks5-server=localhost:1055 --outbound-http-proxy-listen=localhost:1055
+
+  # OpenClaw Gateway (if running in container)
+  # openclaw:
+  #   image: openclaw/gateway:latest
+  #   container_name: openclaw-gateway
+  #   restart: unless-stopped
+  #   environment:
+  #     - GATEWAY_CONFIG=/config/openclaw.json
+  #   volumes:
+  #     - ./openclaw-config:/config:ro
+  #   networks:
+  #     - agent-network
+  #   depends_on:
+  #     - postgres
+  #     - redis
+
+networks:
+  agent-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  n8n_data:
+  postgres_data:
+  redis_data:
+  mcp_backups:
+  tailscale_state:

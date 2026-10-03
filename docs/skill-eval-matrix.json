@@ -1,0 +1,189 @@
+{
+  "evaluatedAt": "2026-10-03T06:10:00-04:00",
+  "dimensions": [
+    "environment_fix_capability",
+    "vibe_coder_relevance",
+    "mcp_n8n_integration",
+    "tailscale_ready",
+    "maintenance_health",
+    "community_trust"
+  ],
+  "evaluations": [
+    {
+      "key": "openclaw-code-agent",
+      "displayName": "Code Agent",
+      "scores": {
+        "environment_fix_capability": 10,
+        "vibe_coder_relevance": 10,
+        "mcp_n8n_integration": 10,
+        "tailscale_ready": 10,
+        "maintenance_health": 10,
+        "community_trust": 10
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: ['environment', 'setup', 'bootstrap', 'configure', 'install', 'workspace', 'proj']",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['coding', 'agent', 'orchestrat', 'claude code', 'codex', 'opencode', 'autonomous', 'background', 'session', 'worktree', 'plan approval']",
+        "mcp_n8n_integration": "MCP/n8n keywords: ['mcp', 'workflow', 'automation', 'mcp server']",
+        "tailscale_ready": "Remote/network keywords: ['remote', 'network']",
+        "maintenance_health": "Tier: source-linked, Downloads: 2200, Recent changelog: yes",
+        "community_trust": "Tier: source-linked, Downloads: 2200"
+      },
+      "total": 60,
+      "max_possible": 60
+    },
+    {
+      "key": "n8n-ops-mcp",
+      "displayName": "n8n Ops MCP",
+      "scores": {
+        "environment_fix_capability": 10,
+        "vibe_coder_relevance": 10,
+        "mcp_n8n_integration": 10,
+        "tailscale_ready": 7,
+        "maintenance_health": 10,
+        "community_trust": 8
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: ['environment', 'configure', 'install', 'workspace', 'proj']",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['agent', 'claude code', 'codex', 'session']",
+        "mcp_n8n_integration": "MCP/n8n keywords: ['mcp', 'n8n', 'workflow', 'webhook', 'automation', 'mcp server', 'mcp-compatible']",
+        "tailscale_ready": "Remote/network keywords: ['ssh']",
+        "maintenance_health": "Tier: source-linked, Downloads: 255, Recent changelog: yes",
+        "community_trust": "Tier: source-linked, Downloads: 255"
+      },
+      "total": 55,
+      "max_possible": 60
+    },
+    {
+      "key": "composio-ao-plugin",
+      "displayName": "Composio Agent Orchestrator",
+      "scores": {
+        "environment_fix_capability": 3,
+        "vibe_coder_relevance": 10,
+        "mcp_n8n_integration": 0,
+        "tailscale_ready": 3,
+        "maintenance_health": 8,
+        "community_trust": 7
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: []",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['coding', 'agent', 'orchestrat']",
+        "mcp_n8n_integration": "MCP/n8n keywords: []",
+        "tailscale_ready": "Remote/network keywords: []",
+        "maintenance_health": "Tier: source-linked, Downloads: 51, Recent changelog: no",
+        "community_trust": "Tier: source-linked, Downloads: 51"
+      },
+      "total": 31,
+      "max_possible": 60
+    },
+    {
+      "key": "deja-vu",
+      "displayName": "deja-vu",
+      "scores": {
+        "environment_fix_capability": 3,
+        "vibe_coder_relevance": 10,
+        "mcp_n8n_integration": 0,
+        "tailscale_ready": 3,
+        "maintenance_health": 8,
+        "community_trust": 7
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: []",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['coding', 'claude code', 'codex', 'session']",
+        "mcp_n8n_integration": "MCP/n8n keywords: []",
+        "tailscale_ready": "Remote/network keywords: []",
+        "maintenance_health": "Tier: source-linked, Downloads: 19, Recent changelog: no",
+        "community_trust": "Tier: source-linked, Downloads: 19"
+      },
+      "total": 31,
+      "max_possible": 60
+    },
+    {
+      "key": "openclaw-vibedot-plugin",
+      "displayName": "Vibe Dot",
+      "scores": {
+        "environment_fix_capability": 3,
+        "vibe_coder_relevance": 4,
+        "mcp_n8n_integration": 0,
+        "tailscale_ready": 3,
+        "maintenance_health": 9,
+        "community_trust": 8
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: []",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['vibe']",
+        "mcp_n8n_integration": "MCP/n8n keywords: []",
+        "tailscale_ready": "Remote/network keywords: []",
+        "maintenance_health": "Tier: source-linked, Downloads: 164, Recent changelog: no",
+        "community_trust": "Tier: source-linked, Downloads: 164"
+      },
+      "total": 27,
+      "max_possible": 60
+    },
+    {
+      "key": "vibe-bridge",
+      "displayName": "Vibe Bridge",
+      "scores": {
+        "environment_fix_capability": 3,
+        "vibe_coder_relevance": 4,
+        "mcp_n8n_integration": 0,
+        "tailscale_ready": 3,
+        "maintenance_health": 9,
+        "community_trust": 8
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: []",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['vibe']",
+        "mcp_n8n_integration": "MCP/n8n keywords: []",
+        "tailscale_ready": "Remote/network keywords: []",
+        "maintenance_health": "Tier: source-linked, Downloads: 152, Recent changelog: no",
+        "community_trust": "Tier: source-linked, Downloads: 152"
+      },
+      "total": 27,
+      "max_possible": 60
+    },
+    {
+      "key": "openclaw-plugin-dot-demo",
+      "displayName": "OpenClaw for Vibe Dot (demo)",
+      "scores": {
+        "environment_fix_capability": 3,
+        "vibe_coder_relevance": 4,
+        "mcp_n8n_integration": 0,
+        "tailscale_ready": 3,
+        "maintenance_health": 8,
+        "community_trust": 7
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: []",
+        "vibe_coder_relevance": "Vibe/coding keywords: ['vibe']",
+        "mcp_n8n_integration": "MCP/n8n keywords: []",
+        "tailscale_ready": "Remote/network keywords: []",
+        "maintenance_health": "Tier: source-linked, Downloads: 59, Recent changelog: no",
+        "community_trust": "Tier: source-linked, Downloads: 59"
+      },
+      "total": 25,
+      "max_possible": 60
+    },
+    {
+      "key": "clara-engineering",
+      "displayName": "Clara Engineering \u2014 Elite Coding & Debug Engine",
+      "scores": {
+        "environment_fix_capability": 3,
+        "vibe_coder_relevance": 0,
+        "mcp_n8n_integration": 0,
+        "tailscale_ready": 3,
+        "maintenance_health": 8,
+        "community_trust": 7
+      },
+      "rationale": {
+        "environment_fix_capability": "Keywords found: []",
+        "vibe_coder_relevance": "Vibe/coding keywords: []",
+        "mcp_n8n_integration": "MCP/n8n keywords: []",
+        "tailscale_ready": "Remote/network keywords: []",
+        "maintenance_health": "Tier: source-linked, Downloads: 19, Recent changelog: no",
+        "community_trust": "Tier: source-linked, Downloads: 19"
+      },
+      "total": 21,
+      "max_possible": 60
+    }
+  ]
+}
