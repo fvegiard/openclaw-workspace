@@ -1,0 +1,73 @@
+{
+  "name": "code-gen",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Launch coding agent session\nconst prompt = $json.prompt || 'Implement feature';\nconst workdir = $json.workdir || '/workspace';\nconst sessionName = $json.sessionName || 'code-gen-' + Date.now();\n\nreturn [{ json: {\n  action: 'agent_launch',\n  prompt: prompt,\n  name: sessionName,\n  workdir: workdir,\n  config: { permission_mode: 'plan', plan_approval: 'delegate', worktree_strategy: 'delegate' }\n}}];"
+      },
+      "id": "launch-agent",
+      "name": "Launch Code Agent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Wait for plan approval\nconst sessionId = $json.sessionId;\n// In practice, this would poll agent_sessions(status='waiting')\nreturn [{ json: { sessionId, waitingFor: 'plan_approval' } }];"
+      },
+      "id": "wait-plan",
+      "name": "Wait for Plan",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Approve plan and continue\nconst sessionId = $json.sessionId;\nreturn [{ json: { action: 'agent_respond', session: sessionId, message: 'Approved. Go ahead.', approve: true, approval_rationale: 'Plan matches requirements.' } }];"
+      },
+      "id": "approve-plan",
+      "name": "Approve Plan",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Monitor until completion\nconst sessionId = $json.sessionId;\nreturn [{ json: { sessionId, action: 'monitor' } }];"
+      },
+      "id": "monitor",
+      "name": "Monitor Completion",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Merge worktree if successful\nconst sessionId = $json.sessionId;\nreturn [{ json: { action: 'agent_merge', session: sessionId, summary: 'Implemented feature from code-gen workflow' } }];"
+      },
+      "id": "merge",
+      "name": "Merge Worktree",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [[{ "node": "Launch Code Agent" }]] },
+    "Launch Code Agent": { "main": [[{ "node": "Wait for Plan" }]] },
+    "Wait for Plan": { "main": [[{ "node": "Approve Plan" }]] },
+    "Approve Plan": { "main": [[{ "node": "Monitor Completion" }]] },
+    "Monitor Completion": { "main": [[{ "node": "Merge Worktree" }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "coding" }, { "name": "agent" }]
+}

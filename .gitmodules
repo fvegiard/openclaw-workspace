@@ -1,0 +1,3 @@
+[submodule "infra/n8n-ops-mcp"]
+	path = infra/n8n-ops-mcp
+	url = https://github.com/openclaw-community-repos/n8n-ops-mcp.git
