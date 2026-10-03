@@ -1,0 +1,220 @@
+---
+- name: Legion PC Remediation - Install Docker, n8n, OpenClaw node
+  hosts: legion-pc
+  gather_facts: yes
+  become: yes
+  vars:
+    install_docker: true
+    install_n8n: true
+    install_openclaw: true
+    tailscale_auth_key: ""
+    n8n_version: "latest"
+    openclaw_version: "latest"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - curl
+          - gnupg
+          - lsb-release
+          - ca-certificates
+          - software-properties-common
+          - python3
+          - python3-pip
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install Docker
+      block:
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+            state: present
+
+        - name: Add Docker repository
+          apt_repository:
+            repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+            state: present
+
+        - name: Install Docker Engine
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-compose-plugin
+            state: present
+          notify: Start Docker
+
+        - name: Add user to docker group
+          user:
+            name: "{{ ansible_user }}"
+            groups: docker
+            append: yes
+      when: install_docker
+
+    - name: Install n8n via Docker
+      block:
+        - name: Create n8n data directory
+          file:
+            path: /home/{{ ansible_user }}/.n8n
+            state: directory
+            owner: "{{ ansible_user }}"
+            group: "{{ ansible_user }}"
+            mode: "0700"
+
+        - name: Create n8n docker-compose.yml
+          template:
+            src: templates/n8n-docker-compose.yml.j2
+            dest: /home/{{ ansible_user }}/docker-compose.n8n.yml
+            owner: "{{ ansible_user }}"
+            group: "{{ ansible_user }}"
+
+        - name: Start n8n container
+          community.docker.docker_compose_v2:
+            project_src: /home/{{ ansible_user }}
+            files: docker-compose.n8n.yml
+            state: present
+      when: install_n8n
+
+    - name: Install Tailscale
+      block:
+        - name: Add Tailscale GPG key
+          apt_key:
+            url: https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }}/gpg
+            state: present
+
+        - name: Add Tailscale repository
+          apt_repository:
+            repo: "deb https://pkgs.tailscale.com/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+            state: present
+
+        - name: Install Tailscale
+          apt:
+            name: tailscale
+            state: present
+
+        - name: Start Tailscale
+          systemd:
+            name: tailscaled
+            enabled: yes
+            state: started
+
+        - name: Join tailnet with auth key
+          command: tailscale up --auth-key={{ tailscale_auth_key }} --accept-dns=false
+          when: tailscale_auth_key != ""
+          register: tailscale_join
+          changed_when: "'success' in tailscale_join.stdout or 'already' in tailscale_join.stdout"
+      when: install_openclaw or install_n8n
+
+    - name: Install OpenClaw node
+      block:
+        - name: Check if Node.js is installed
+          command: node --version
+          register: node_check
+          failed_when: false
+          changed_when: false
+
+        - name: Install Node.js 20 (if not present)
+          block:
+            - name: Add NodeSource repository
+              shell: |
+                curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+              args:
+                executable: /bin/bash
+
+            - name: Install Node.js
+              apt:
+                name: nodejs
+                state: present
+          when: node_check.rc != 0
+
+        - name: Install OpenClaw globally
+          npm:
+            name: openclaw
+            global: yes
+            version: "{{ openclaw_version }}"
+          environment:
+            PATH: "/usr/local/bin:/usr/bin:/bin"
+
+        - name: Configure OpenClaw node
+          block:
+            - name: Create OpenClaw config directory
+              file:
+                path: /home/{{ ansible_user }}/.openclaw
+                state: directory
+                owner: "{{ ansible_user }}"
+                group: "{{ ansible_user }}"
+
+            - name: Generate OpenClaw config
+              template:
+                src: templates/openclaw-node-config.json.j2
+                dest: /home/{{ ansible_user }}/.openclaw/openclaw.json
+                owner: "{{ ansible_user }}"
+                group: "{{ ansible_user }}"
+                mode: "0600"
+
+            - name: Start OpenClaw as systemd service
+              template:
+                src: templates/openclaw.service.j2
+                dest: /etc/systemd/system/openclaw.service
+              notify: Reload systemd
+
+            - name: Enable and start OpenClaw
+              systemd:
+                name: openclaw
+                enabled: yes
+                state: started
+      when: install_openclaw
+
+    - name: Verify installation
+      block:
+        - name: Check Docker
+          command: docker --version
+          register: docker_ver
+          changed_when: false
+
+        - name: Check n8n
+          uri:
+            url: http://localhost:5678/healthz
+            method: GET
+            timeout: 10
+          register: n8n_health
+          failed_when: false
+          changed_when: false
+
+        - name: Check Tailscale
+          command: tailscale status --json
+          register: ts_status
+          changed_when: false
+
+        - name: Check OpenClaw
+          command: openclaw --version
+          register: oc_ver
+          changed_when: false
+
+        - name: Output verification results
+          debug:
+            msg:
+              - "Docker: {{ docker_ver.stdout }}"
+              - "n8n: {{ 'healthy' if n8n_health.status == 200 else 'unhealthy' }}"
+              - "Tailscale: {{ ts_status.stdout }}"
+              - "OpenClaw: {{ oc_ver.stdout }}"
+
+  handlers:
+    - name: Start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes

@@ -1,0 +1,65 @@
+{
+  "name": "health-check",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Comprehensive health check\nconst { execSync } = require('child_process');\nconst checks = [];\n\ntry {\n  const n8nHealth = execSync('curl -sf ' + $env.N8N_BASE_URL + '/healthz', { encoding: 'utf8', timeout: 5000 });\n  checks.push({ name: 'n8n', status: 'healthy', detail: n8nHealth });\n} catch (e) {\n  checks.push({ name: 'n8n', status: 'unhealthy', detail: e.message });\n}\n\ntry {\n  const agentVersion = execSync('npx openclaw-code-agent@5.1.0 --version', { encoding: 'utf8', timeout: 10000 });\n  checks.push({ name: 'code-agent', status: 'healthy', detail: agentVersion.trim() });\n} catch (e) {\n  checks.push({ name: 'code-agent', status: 'unhealthy', detail: e.message });\n}\n\ntry {\n  const tailscaleStatus = execSync('tailscale status --json', { encoding: 'utf8', timeout: 5000 });\n  checks.push({ name: 'tailscale', status: 'healthy', detail: tailscaleStatus });\n} catch (e) {\n  checks.push({ name: 'tailscale', status: 'unhealthy', detail: e.message });\n}\n\nconst allHealthy = checks.every(c => c.status === 'healthy');\nreturn [{ json: { healthy: allHealthy, checks, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "health-checks",
+      "name": "Run Health Checks",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.healthy}}", "operation": "true" }
+          ]
+        }
+      },
+      "id": "health-if",
+      "name": "All Healthy?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { status: 'healthy', message: 'All systems operational', checks: $json.checks } }];"
+      },
+      "id": "healthy",
+      "name": "Healthy",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Trigger alerts for unhealthy components\nconst unhealthy = $json.checks.filter(c => c.status !== 'healthy');\nreturn [{ json: { status: 'degraded', alerts: unhealthy } }];"
+      },
+      "id": "degraded",
+      "name": "Degraded",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 400]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [[{ "node": "Run Health Checks" }]] },
+    "Run Health Checks": { "main": [[{ "node": "All Healthy?" }]] },
+    "All Healthy?": { "main": [[{ "node": "Healthy" }], [{ "node": "Degraded" }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "monitoring" }, { "name": "health" }]
+}

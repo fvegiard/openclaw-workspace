@@ -1,0 +1,71 @@
+{
+  "mcpServers": {
+    "n8n-ops": {
+      "command": "node",
+      "args": ["infra/n8n-ops-mcp/dist/index.js"],
+      "env": {
+        "N8N_BASE_URL": "${N8N_BASE_URL}",
+        "N8N_API_KEY": "${N8N_API_KEY}",
+        "N8N_ENABLE_EDIT": "true",
+        "N8N_ENABLE_CREDENTIALS_WRITE": "true",
+        "N8N_BACKUP_DIR": "~/.n8n-backups",
+        "N8N_MAX_EXECUTION_LOG_BYTES": "65536",
+        "N8N_REQUEST_TIMEOUT_MS": "15000"
+      }
+    },
+    "openclaw-code-agent": {
+      "command": "npx",
+      "args": ["openclaw-code-agent@5.1.0"],
+      "env": {}
+    }
+  },
+  "agentTeam": {
+    "agents": [
+      {
+        "id": "planner",
+        "name": "Planner",
+        "role": "Architecture & Task Decomposition",
+        "model": "anthropic/claude-opus-5",
+        "tools": ["n8n_list_workflows", "n8n_get_workflow", "n8n_validate_workflow", "n8n_diff_workflow", "n8n_list_schedules", "n8n_execution_stats", "agent_launch", "agent_sessions", "agent_output"],
+        "systemPrompt": "You are the Planner. Break down complex requests into atomic tasks. Create n8n workflows for automation. Launch coding agents via openclaw-code-agent. Output structured plans with dependencies."
+      },
+      {
+        "id": "coder",
+        "name": "Coder",
+        "role": "Implementation & Code Generation",
+        "model": "anthropic/claude-sonnet-5",
+        "tools": ["agent_launch", "agent_respond", "agent_output", "agent_sessions", "agent_merge", "agent_worktree_status", "n8n_create_workflow", "n8n_save_workflow", "n8n_validate_workflow"],
+        "systemPrompt": "You are the Coder. Execute plans by writing code. Use openclaw-code-agent for background coding sessions with plan approval. Create n8n workflows for deployments. Follow SOLID, Clean Architecture. Write tests first."
+      },
+      {
+        "id": "reviewer",
+        "name": "Reviewer",
+        "role": "Code Review & Quality Assurance",
+        "model": "anthropic/claude-opus-5",
+        "tools": ["agent_output", "agent_sessions", "agent_repo_policy", "agent_worktree_status", "n8n_validate_workflow", "n8n_run_audit", "n8n_check_disabled_nodes", "n8n_find_workflows_using_node_type"],
+        "systemPrompt": "You are the Reviewer. Audit code and workflows for correctness, security, and maintainability. Run n8n security audits. Check for disabled nodes, deprecated patterns. Approve or request changes on plans and worktrees."
+      },
+      {
+        "id": "deployer",
+        "name": "Deployer",
+        "role": "Deployment & Infrastructure",
+        "model": "anthropic/claude-sonnet-5",
+        "tools": ["n8n_trigger", "n8n_activate", "n8n_deactivate", "n8n_list_webhooks", "n8n_create_tag", "n8n_set_workflow_tags", "n8n_list_credentials", "n8n_find_workflows_using_credential", "agent_goal"],
+        "systemPrompt": "You are the Deployer. Execute deployments via n8n workflows. Manage credentials rotation. Trigger workflows, activate/deactivate. Handle tailscale node provisioning. Run autonomous goal loops for environment health."
+      },
+      {
+        "id": "monitor",
+        "name": "Monitor",
+        "role": "Observability & Incident Response",
+        "model": "anthropic/claude-sonnet-5",
+        "tools": ["n8n_list_executions", "n8n_get_execution", "n8n_search_executions", "n8n_execution_stats", "n8n_retry_execution", "n8n_cancel_execution", "n8n_audit_browser_bridge_usage", "agent_sessions", "agent_output"],
+        "systemPrompt": "You are the Monitor. Watch executions, detect failures, retry/recover. Search execution logs for error patterns. Track workflow performance stats. Alert on anomalies. Manage agent session health."
+      }
+    ],
+    "coordination": {
+      "messageBus": "n8n-workflow-events",
+      "sharedState": "redis://localhost:6379/0",
+      "decisionLog": "postgresql://user:pass@localhost:5432/agent_team"
+    }
+  }
+}
