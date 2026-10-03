@@ -1,0 +1,62 @@
+{
+  "name": "deploy-tailscale",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Inventory target machine via Tailscale SSH\nconst target = $json.target || 'legion-pc';\nconst authKey = $env.TAILSCALE_AUTH_KEY;\n\nreturn [{ json: {\n  target,\n  authKey,\n  commands: [\n    'uname -a',\n    'docker --version',\n    'n8n --version 2>/dev/null || echo n8n not installed',\n    'openclaw --version 2>/dev/null || echo openclaw not installed',\n    'tailscale status --json'\n  ]\n}}];"
+      },
+      "id": "inventory",
+      "name": "Inventory Legion",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Run Ansible playbook for remediation\nconst inventory = $json[0];\nconst needsDocker = !inventory.stdout?.includes('docker');\nconst needsN8n = !inventory.stdout?.includes('n8n');\nconst needsOpenclaw = !inventory.stdout?.includes('openclaw');\n\nreturn [{ json: {\n  target: $json.target,\n  playbook: 'playbooks/legion-fix.yml',\n  extraVars: {\n    install_docker: needsDocker,\n    install_n8n: needsN8n,\n    install_openclaw: needsOpenclaw,\n    tailscale_auth_key: $json.authKey\n  }\n}}];"
+      },
+      "id": "plan-remediation",
+      "name": "Plan Remediation",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Execute remediation via SSH\nconst { execSync } = require('child_process');\nconst target = $json.target;\nconst playbook = $json.playbook;\nconst extraVars = JSON.stringify($json.extraVars).replace(/"/g, '\\\\\"');\n\ntry {\n  execSync(`ansible-playbook -i ${target}, ${playbook} --extra-vars '${extraVars}'`, { stdio: 'pipe' });\n  return [{ json: { status: 'success', target } }];\n} catch (e) {\n  return [{ json: { status: 'error', target, error: e.message } }];\n}"
+      },
+      "id": "run-playbook",
+      "name": "Run Playbook",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Verify Legion node is online\nconst target = $json.target;\nconst { execSync } = require('child_process');\ntry {\n  const ping = execSync(`tailscale ping ${target}`, { encoding: 'utf8' });\n  const devices = execSync('openclaw devices list', { encoding: 'utf8' });\n  return [{ json: { status: 'verified', ping, devices } }];\n} catch (e) {\n  return [{ json: { status: 'failed', error: e.message } }];\n}"
+      },
+      "id": "verify",
+      "name": "Verify Legion",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [[{ "node": "Inventory Legion" }]] },
+    "Inventory Legion": { "main": [[{ "node": "Plan Remediation" }]] },
+    "Plan Remediation": { "main": [[{ "node": "Run Playbook" }]] },
+    "Run Playbook": { "main": [[{ "node": "Verify Legion" }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "deployment" }, { "name": "tailscale" }, { "name": "legion" }]
+}

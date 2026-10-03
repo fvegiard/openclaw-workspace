@@ -1,0 +1,101 @@
+{
+  "name": "env-bootstrap",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Check if n8n is healthy\nconst response = await $http.request({\n  method: 'GET',\n  url: $env.N8N_BASE_URL + '/healthz',\n  timeout: 5000\n});\nreturn [{ json: { healthy: response.status === 200 } }];"
+      },
+      "id": "check-health",
+      "name": "Check n8n Health",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Bootstrap openclaw-code-agent environment\nconst { execSync } = require('child_process');\ntry {\n  execSync('npx openclaw-code-agent@5.1.0 --version', { stdio: 'pipe' });\n  return [{ json: { agentReady: true } }];\n} catch (e) {\n  return [{ json: { agentReady: false, error: e.message } }];\n}"
+      },
+      "id": "check-agent",
+      "name": "Check Code Agent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.healthy}}", "operation": "true" }
+          ]
+        }
+      },
+      "id": "health-if",
+      "name": "Health OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{$json.agentReady}}", "operation": "true" }
+          ]
+        }
+      },
+      "id": "agent-if",
+      "name": "Agent Ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [750, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { status: 'success', message: 'Environment bootstrap complete. n8n + code agent ready.' } }];"
+      },
+      "id": "success",
+      "name": "Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { status: 'error', message: 'n8n health check failed' } }];"
+      },
+      "id": "fail-health",
+      "name": "Fail Health",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { status: 'error', message: 'Code agent not available' } }];"
+      },
+      "id": "fail-agent",
+      "name": "Fail Agent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 500]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [[{ "node": "Check n8n Health" }, { "node": "Check Code Agent" }]] },
+    "Check n8n Health": { "main": [[{ "node": "Health OK?" }]] },
+    "Check Code Agent": { "main": [[{ "node": "Agent Ready?" }]] },
+    "Health OK?": { "main": [[{ "node": "Success" }], [{ "node": "Fail Health" }]] },
+    "Agent Ready?": { "main": [[{ "node": "Success" }], [{ "node": "Fail Agent" }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "bootstrap" }, { "name": "environment" }]
+}
