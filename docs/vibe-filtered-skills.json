@@ -1,0 +1,103 @@
+{
+  "filteredAt": "2026-10-03T05:55:00-04:00",
+  "totalCandidates": 10,
+  "filteredCount": 8,
+  "skills": [
+    {
+      "key": "composio-ao-plugin",
+      "displayName": "Composio Agent Orchestrator",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "OpenClaw plugin for Agent Orchestrator \u2014 AI tools, slash commands, hooks, and health monitoring for managing parallel coding agents from OpenClaw",
+      "latestVersion": "0.3.1",
+      "runtimeId": "agent-orchestrator",
+      "downloads": 51,
+      "verificationTier": "source-linked",
+      "relevanceScore": 55
+    },
+    {
+      "key": "openclaw-code-agent",
+      "displayName": "Code Agent",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "OpenClaw plugin that runs Claude Code, Codex, and experimental OpenCode as managed background coding sessions from chat, with plan approval, isolated git worktrees, and merge/PR follow-through.",
+      "latestVersion": "5.1.0",
+      "runtimeId": "openclaw-code-agent",
+      "downloads": 2200,
+      "verificationTier": "source-linked",
+      "relevanceScore": 45
+    },
+    {
+      "key": "n8n-ops-mcp",
+      "displayName": "n8n Ops MCP",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "Ops-focused n8n tools for any MCP-compatible client: workflow + execution lifecycle (create, save, archive, delete, cancel, retry single + batch), tag management, security audit, plus composed scanners (find-by-node-type, execution-stats). MCP server + first-class OpenClaw plugin.",
+      "latestVersion": "0.13.0",
+      "runtimeId": "n8n",
+      "downloads": 255,
+      "verificationTier": "source-linked",
+      "relevanceScore": 45
+    },
+    {
+      "key": "openclaw-vibedot-plugin",
+      "displayName": "Vibe Dot",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "OpenClaw channel plugin for Vibe Dot transcriptions and commands",
+      "latestVersion": "0.0.6",
+      "runtimeId": "vibedot",
+      "downloads": 164,
+      "verificationTier": "source-linked",
+      "relevanceScore": 45
+    },
+    {
+      "key": "vibe-bridge",
+      "displayName": "Vibe Bridge",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "OpenClaw channel plugin that bridges WebSocket frames to OpenClaw via @vibeus/bridge-contracts.",
+      "latestVersion": "0.4.0",
+      "runtimeId": "vibe-bridge",
+      "downloads": 152,
+      "verificationTier": "source-linked",
+      "relevanceScore": 45
+    },
+    {
+      "key": "clara-engineering",
+      "displayName": "Clara Engineering \u2014 Elite Coding & Debug Engine",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "Elite software-engineering toolkit by Clara: architecture, systematic debugging, senior code review, spec synthesis, runtime diagnostics.",
+      "latestVersion": "1.0.7",
+      "runtimeId": "clara-engineering",
+      "downloads": 19,
+      "verificationTier": "source-linked",
+      "relevanceScore": 45
+    },
+    {
+      "key": "deja-vu",
+      "displayName": "deja-vu",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "deja-vu memory for OpenClaw: the coding sessions already on this machine \u2014 OpenClaw, Claude Code, Codex, Cursor and 31 more \u2014 recalled before each turn and searchable as tools. A local index, no LLM.",
+      "latestVersion": "0.21.5",
+      "runtimeId": "deja-vu",
+      "downloads": 19,
+      "verificationTier": "source-linked",
+      "relevanceScore": 35
+    },
+    {
+      "key": "openclaw-plugin-dot-demo",
+      "displayName": "OpenClaw for Vibe Dot (demo)",
+      "family": "code-plugin",
+      "channel": "community",
+      "summary": "Vibe Dot Channel Plugin for OpenClaw",
+      "latestVersion": "0.1.2",
+      "runtimeId": "vibe-dot",
+      "downloads": 59,
+      "verificationTier": "source-linked",
+      "relevanceScore": 25
+    }
+  ]
+}
